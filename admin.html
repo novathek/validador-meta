@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Panel de Administración — META Capacitación</title>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%231A56DB%22/><path d=%22M28 52 L42 66 L72 34%22 fill=%22none%22 stroke=%22white%22 stroke-width=%2210%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    body { background: var(--md-surface-1); }
+
+    .admin-container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    /* ── Header ──────────────────────────── */
+    .admin-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+      margin-bottom: 28px;
+    }
+    .admin-eyebrow {
+      font-size: .75rem;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--md-on-surface-var);
+    }
+    .admin-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--md-on-surface);
+      margin: 0;
+    }
+    .admin-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .admin-actions .btn { width: auto; height: 44px; padding: 0 20px; }
+
+    /* ── Search bar ──────────────────────── */
+    .admin-search-wrap { margin-bottom: 14px; }
+    .admin-search-inner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--md-surface);
+      border: 1.5px solid var(--md-outline-variant);
+      border-radius: var(--shape-full);
+      padding: 10px 18px;
+      transition: var(--transition);
+      color: var(--md-outline);
+    }
+    .admin-search-inner:focus-within {
+      border-color: var(--md-primary);
+      box-shadow: 0 0 0 3px var(--md-primary-container);
+      color: var(--md-primary);
+    }
+    .admin-search-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: 'Roboto', system-ui, sans-serif;
+      font-size: .9375rem;
+      color: var(--md-on-surface);
+      outline: none;
+    }
+    .admin-search-input::placeholder { color: var(--md-outline); }
+
+    /* ── Filtros ─────────────────────────── */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      background: var(--md-surface);
+      border: 1.5px solid var(--md-outline-variant);
+      color: var(--md-on-surface-var);
+      border-radius: var(--shape-full);
+      padding: 7px 18px;
+      font-size: .8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+      font-family: 'Roboto', system-ui, sans-serif;
+    }
+    .filter-chip:hover { background: var(--md-surface-1); border-color: var(--md-outline); }
+    .filter-chip.active {
+      background: var(--md-primary);
+      color: #fff;
+      border-color: var(--md-primary);
+      box-shadow: var(--elev-1);
+    }
+
+    /* ── Lista de registros ──────────────── */
+    .admin-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .admin-item {
+      background: var(--md-surface);
+      border-radius: var(--shape-sm);
+      border: 1px solid var(--md-outline-variant);
+      padding: 14px 16px;
+      box-shadow: var(--elev-1);
+      animation: fade-up .3s ease-out backwards;
+    }
+
+    .admin-item-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .admin-item-name {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--md-on-surface);
+      line-height: 1.3;
+    }
+    .admin-item-meta {
+      font-size: .8125rem;
+      color: var(--md-on-surface-var);
+      margin-top: 3px;
+    }
+    .admin-item-badges {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    /* Horarios de entrada/salida */
+    .admin-item-horarios {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    /* Datos extras (expandible) */
+    .admin-item-datos {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--md-outline-variant);
+    }
+    .admin-item-datos.open { display: block; }
+    .admin-item-datos .person-details { font-size: .8125rem; }
+    .admin-item-datos .detail-row .label { min-width: 100px; font-size: .775rem; }
+
+    .btn-expand {
+      background: transparent;
+      border: 1.5px solid var(--md-outline-variant);
+      border-radius: var(--shape-full);
+      color: var(--md-on-surface-var);
+      font-family: 'Roboto', system-ui, sans-serif;
+      font-size: .775rem;
+      font-weight: 500;
+      padding: 4px 12px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-expand:hover { background: var(--md-surface-1); border-color: var(--md-outline); }
+
+    .btn-delete {
+      background: var(--md-error-container);
+      color: var(--md-error);
+      border: none;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+    .btn-delete:hover  { background: var(--md-error); color: #fff; transform: scale(1.05); }
+    .btn-delete:active { transform: scale(0.95); }
+
+    /* ── Estado vacío ────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--md-outline);
+      background: var(--md-surface);
+      border-radius: var(--shape-sm);
+      border: 1px dashed var(--md-outline-variant);
+      font-size: .9rem;
+    }
+
+    /* ── Contador de resultados ──────────── */
+    .results-count {
+      font-size: .8rem;
+      color: var(--md-on-surface-var);
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+
+    @media (min-width: 600px) {
+      .admin-item-header { flex-wrap: nowrap; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-container">
+
+  <!-- Header -->
+  <div class="admin-header">
+    <div class="admin-eyebrow">Operativo META · Catamarca 2026</div>
+    <h1 class="admin-title">Panel de Administración</h1>
+    <div class="admin-actions">
+      <button class="btn btn-outlined" onclick="window.location.href='index.html'" style="gap:6px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Volver a la app
+      </button>
+      <button class="btn btn-filled" id="btn-export-excel" onclick="Admin.exportExcel()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Exportar a Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="margin-bottom:24px;">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-total">—</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-viernes" style="color:var(--md-primary)">—</div>
+      <div class="stat-label">Viernes 7</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-sabado" style="color:var(--md-secondary)">—</div>
+      <div class="stat-label">Sábado 8</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-completos" style="color:#1B873A">—</div>
+      <div class="stat-label">Completos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-nuevos" style="color:#6D28D9">—</div>
+      <div class="stat-label">Excepcionales</div>
+    </div>
+  </div>
+
+  <!-- Buscador -->
+  <div class="admin-search-wrap">
+    <div class="admin-search-inner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="admin-search-input" id="admin-search" type="text"
+        placeholder="Buscar por nombre, apellido o DNI..." oninput="Admin.applyFilters()" />
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filter-row">
+    <button class="filter-chip active" id="filter-all"       onclick="Admin.setFilter('all')">Todos</button>
+    <button class="filter-chip"        id="filter-viernes7"  onclick="Admin.setFilter('viernes7')">Viernes 7 — Directivos</button>
+    <button class="filter-chip"        id="filter-sabado8"   onclick="Admin.setFilter('sabado8')">Sábado 8 — Docentes</button>
+    <button class="filter-chip"        id="filter-excepcional" onclick="Admin.setFilter('excepcional')">Excepcionales</button>
+    <button class="filter-chip"        id="filter-solo-entrada" onclick="Admin.setFilter('solo-entrada')">Solo entrada</button>
+    <button class="filter-chip"        id="filter-completos" onclick="Admin.setFilter('completos')">Completos</button>
+  </div>
+
+  <div class="results-count" id="results-count"></div>
+
+  <!-- Lista -->
+  <div class="admin-list" id="admin-list">
+    <div class="empty-state">Cargando registros...</div>
+  </div>
+
+</div>
+
+<!-- Scripts -->
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="admin.js"></script>
+
+</body>
+</html>

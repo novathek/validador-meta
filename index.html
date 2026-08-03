@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="description" content="Web App de asistencia para la capacitación META Catamarca 2026." />
+
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%231A56DB%22/><path d=%22M28 52 L42 66 L72 34%22 fill=%22none%22 stroke=%22white%22 stroke-width=%2210%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="META · Asistencia de Capacitación" />
+  <meta property="og:description" content="Web App para el registro de asistencia. Capacitación META Catamarca 2026." />
+  <meta property="og:image" content="og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="META · Asistencia de Capacitación" />
+  <meta name="twitter:description" content="Web App para el registro de asistencia. Capacitación META Catamarca 2026." />
+  <meta name="twitter:image" content="og-image.png" />
+
+  <title>META · Asistencia de Capacitación</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div id="app">
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 0 — PANTALLA PRINCIPAL
+    ══════════════════════════════════════════════ -->
+    <div class="screen active" id="screen-home">
+
+      <div class="hero-header">
+        <div class="hero-eyebrow">Operativo META · Catamarca</div>
+        <h1 class="hero-title">Control de Asistencia</h1>
+        <div class="hero-sub">Capacitación 2026</div>
+      </div>
+
+      <div class="screen-content">
+        <p class="section-label" style="margin-top:20px;">Seleccioná el día para continuar</p>
+
+        <div class="role-cards">
+
+          <!-- Viernes 7 de Agosto -->
+          <button class="role-card viernes7" id="btn-viernes7" onclick="App.selectDay('viernes7')">
+            <div class="role-card-leading">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5C3.89 3 3 3.9 3 5v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+              </svg>
+            </div>
+            <div class="role-card-body">
+              <div class="role-card-title">Viernes 7 de Agosto</div>
+              <div class="role-card-sub">Directores, vicedirectores y supervisores</div>
+            </div>
+            <div class="role-card-trailing">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          </button>
+
+          <!-- Sábado 8 de Agosto -->
+          <button class="role-card sabado8" id="btn-sabado8" onclick="App.selectDay('sabado8')">
+            <div class="role-card-leading">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5C3.89 3 3 3.9 3 5v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+              </svg>
+            </div>
+            <div class="role-card-body">
+              <div class="role-card-title">Sábado 8 de Agosto</div>
+              <div class="role-card-sub">Docentes</div>
+            </div>
+            <div class="role-card-trailing">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          </button>
+
+          <!-- Casos Excepcionales -->
+          <button class="role-card excepcional" id="btn-excepcional" onclick="App.goExcepcional()">
+            <div class="role-card-leading">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+            <div class="role-card-body">
+              <div class="role-card-title">Casos Excepcionales</div>
+              <div class="role-card-sub">Registro directo de nuevas personas</div>
+            </div>
+            <div class="role-card-trailing">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          </button>
+
+        </div>
+
+        <div class="export-row">
+          <button class="btn btn-outlined" id="btn-ver-asistencia" onclick="App.openPanel()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Ver asistencia
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 1 — BÚSQUEDA (compartida para ambos días)
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-busqueda">
+
+      <div class="top-app-bar">
+        <button class="icon-btn" id="btn-back-busqueda" onclick="App.goHome()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <span class="top-app-bar-title" id="topbar-busqueda">Búsqueda</span>
+      </div>
+
+      <div class="screen-header">
+        <div class="screen-header-label" id="chip-busqueda">Día seleccionado</div>
+        <h2 class="screen-title" id="titulo-busqueda">Buscar persona</h2>
+        <p class="screen-desc">Elegí el criterio y escribí el valor</p>
+      </div>
+
+      <!-- Chips de criterio de búsqueda -->
+      <div class="search-chips-wrap">
+        <div class="search-chips" id="search-chips">
+          <button class="chip active" data-type="dni"      id="chip-dni"      onclick="App.selectCriteria('dni')">DNI</button>
+          <button class="chip"        data-type="nombre"   id="chip-nombre"   onclick="App.selectCriteria('nombre')">Nombre</button>
+          <button class="chip"        data-type="apellido" id="chip-apellido" onclick="App.selectCriteria('apellido')">Apellido</button>
+          <button class="chip"        data-type="cuit"     id="chip-cuit"     onclick="App.selectCriteria('cuit')">CUIT</button>
+          <button class="chip"        data-type="celular"  id="chip-celular"  onclick="App.selectCriteria('celular')">Celular</button>
+          <button class="chip"        data-type="mail"     id="chip-mail"     onclick="App.selectCriteria('mail')">Mail</button>
+        </div>
+      </div>
+
+      <div style="padding: 0 16px;">
+        <div class="text-field">
+          <label class="text-field-label" for="input-busqueda" id="label-busqueda">Número de DNI</label>
+          <input class="text-field-input input-busqueda" id="input-busqueda"
+            type="tel" inputmode="numeric" placeholder="Ingresá el DNI"
+            autocomplete="off" autocorrect="off" spellcheck="false"
+            oninput="App.onBusquedaInput()" onkeydown="App.onBusquedaKey(event)" />
+        </div>
+      </div>
+
+      <div id="alert-busqueda"></div>
+      <div id="results-busqueda" class="results-list"></div>
+
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn btn-filled" id="btn-buscar" onclick="App.buscar()" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <span id="btn-buscar-text">Buscar</span>
+          <div class="spinner" id="spinner-buscar" style="display:none;"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 2 — CASOS EXCEPCIONALES
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-excepcional">
+
+      <div class="top-app-bar">
+        <button class="icon-btn" onclick="App.goHome()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <span class="top-app-bar-title">Caso Excepcional</span>
+      </div>
+
+      <div class="screen-header">
+        <div class="screen-header-label excepcional">Registro directo</div>
+        <h2 class="screen-title">Completá los datos</h2>
+        <p class="screen-desc">Todos los campos con * son obligatorios</p>
+      </div>
+
+      <div class="scroll-body">
+        <form id="form-excepcional" autocomplete="off">
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-dia">Día de capacitación *</label>
+            <select class="text-field-input" id="exc-dia">
+              <option value="">Seleccioná el día...</option>
+              <option value="viernes7">Viernes 7 de Agosto — Directivos</option>
+              <option value="sabado8">Sábado 8 de Agosto — Docentes</option>
+            </select>
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-rol">Rol *</label>
+            <select class="text-field-input" id="exc-rol">
+              <option value="">Seleccioná el rol...</option>
+              <option value="Director">Director</option>
+              <option value="Vicedirector">Vicedirector</option>
+              <option value="Supervisor">Supervisor</option>
+              <option value="Docente">Docente</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-nombre">Nombre *</label>
+            <input class="text-field-input" id="exc-nombre" type="text" autocomplete="off" />
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-apellido">Apellido *</label>
+            <input class="text-field-input" id="exc-apellido" type="text" autocomplete="off" />
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-dni">DNI *</label>
+            <input class="text-field-input input-dni-exc" id="exc-dni" type="tel" inputmode="numeric" placeholder="00000000" maxlength="10" autocomplete="off" />
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-cuit">CUIT *</label>
+            <input class="text-field-input" id="exc-cuit" type="tel" inputmode="numeric" placeholder="20000000000" maxlength="13" autocomplete="off" />
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-celular">Celular *</label>
+            <input class="text-field-input" id="exc-celular" type="tel" inputmode="numeric" placeholder="3834000000" autocomplete="off" />
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-mail">Mail *</label>
+            <input class="text-field-input" id="exc-mail" type="email" inputmode="email" autocomplete="off" />
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-escuela">Escuela *</label>
+            <input class="text-field-input" id="exc-escuela" type="text" autocomplete="off" />
+          </div>
+
+          <!-- Campos opcionales -->
+          <div class="section-label" style="margin-top:8px;margin-bottom:8px;text-align:left;padding:0;">Datos adicionales (opcionales)</div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-nacimiento">Fecha de nacimiento</label>
+            <input class="text-field-input" id="exc-nacimiento" type="date" />
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-departamento">Departamento</label>
+            <input class="text-field-input" id="exc-departamento" type="text" autocomplete="off" />
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-nivel">Nivel educativo</label>
+            <select class="text-field-input" id="exc-nivel">
+              <option value="">Seleccioná...</option>
+              <option>Primaria</option>
+              <option>Secundaria</option>
+              <option>Superior</option>
+            </select>
+          </div>
+
+          <div class="text-field">
+            <label class="text-field-label" for="exc-nodo">Nodo</label>
+            <input class="text-field-input" id="exc-nodo" type="text" autocomplete="off" />
+          </div>
+
+        </form>
+        <div id="alert-excepcional"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-filled excepcional-btn" id="btn-inscribir-exc" onclick="App.inscribirExcepcional()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span id="btn-inscribir-exc-text">Registrar asistencia</span>
+          <div class="spinner" id="spinner-excepcional" style="display:none;"></div>
+        </button>
+        <button class="btn btn-outlined" onclick="App.goHome()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 3 — ÉXITO
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-success">
+      <div class="success-center">
+        <div class="check-ring">
+          <svg class="check-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <div>
+          <div class="success-name" id="success-name">Nombre Apellido</div>
+          <div class="success-sub" id="success-sub">Asistencia registrada correctamente</div>
+        </div>
+        <div class="success-badge" id="success-badge"></div>
+        <div id="success-details" style="color:var(--md-on-surface-var);font-size:.85rem;text-align:center;line-height:1.6;"></div>
+        <div class="countdown-bar">
+          <div class="countdown-fill" id="countdown-fill"></div>
+        </div>
+        <p style="color:var(--md-outline);font-size:.8rem;">Volviendo a la búsqueda...</p>
+      </div>
+    </div>
+
+  </div><!-- #app -->
+
+  <!-- ════════════════════════════════════════════
+       MODAL — CONFIRMACIÓN DE ASISTENCIA (Popup)
+  ════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-confirm" onclick="App.closeConfirmIfOutside(event)">
+    <div class="modal-confirm-sheet" id="modal-confirm-sheet">
+      <div class="modal-handle"></div>
+
+      <!-- Banner de estado: ENTRADA o SALIDA -->
+      <div class="confirm-status-banner" id="confirm-status-banner">
+        <span id="confirm-status-icon"></span>
+        <span id="confirm-status-text">Marcando entrada</span>
+      </div>
+
+      <!-- Nombre de la persona -->
+      <div class="confirm-person-name" id="confirm-person-name">Nombre Apellido</div>
+
+      <!-- Todos los datos de la persona (scrollable) -->
+      <div class="confirm-details-scroll">
+        <div class="person-details" id="confirm-details"></div>
+      </div>
+
+      <div id="alert-confirmar"></div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:0 0 8px;">
+        <button class="btn btn-filled-success" id="btn-confirmar" onclick="App.confirmar()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span id="btn-confirmar-text">Confirmar</span>
+          <div class="spinner" id="spinner-confirmar" style="display:none;"></div>
+        </button>
+        <button class="btn btn-outlined" onclick="App.closeConfirm()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       MODAL — PANEL DE ASISTENCIA
+  ════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-panel" onclick="App.closePanelIfOutside(event)">
+    <div class="modal-panel-sheet">
+      <div class="modal-handle"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div class="modal-title">Panel de Asistencia</div>
+        <button class="icon-btn" onclick="App.closePanel()" style="width:40px;height:40px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-sub">Registros totales acumulados</div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-total">—</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-viernes" style="color:var(--md-primary)">—</div>
+          <div class="stat-label">Viernes 7</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-sabado" style="color:var(--md-secondary)">—</div>
+          <div class="stat-label">Sábado 8</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-completos" style="color:#1B873A">—</div>
+          <div class="stat-label">Completos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-excepcionales" style="color:#6D28D9">—</div>
+          <div class="stat-label">Excepcionales</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="panel-tabs" id="panel-tabs">
+        <button class="panel-tab active" id="tab-todos"     onclick="App.setTab('todos')">Todos</button>
+        <button class="panel-tab"        id="tab-viernes7"  onclick="App.setTab('viernes7')">Viernes 7</button>
+        <button class="panel-tab"        id="tab-sabado8"   onclick="App.setTab('sabado8')">Sábado 8</button>
+        <button class="panel-tab"        id="tab-excep"     onclick="App.setTab('excepcional')">Excepcionales</button>
+      </div>
+
+      <!-- Buscador -->
+      <div class="panel-search-wrap">
+        <div class="panel-search-inner">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input class="panel-search-input" id="panel-search-input" type="text"
+            placeholder="Buscar por nombre o DNI..." oninput="App.buscarEnPanel()" />
+        </div>
+      </div>
+
+      <!-- Lista de asistentes -->
+      <div class="panel-list" id="panel-list">
+        <div style="text-align:center;color:var(--md-outline);padding:24px 0;font-size:.875rem;">
+          Cargando registros...
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+        <button class="btn btn-filled" id="btn-export-excel" onclick="App.exportExcel()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Exportar a Excel
+        </button>
+        <button class="btn btn-outlined" onclick="App.closePanel()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>

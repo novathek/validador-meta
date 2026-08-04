@@ -892,13 +892,15 @@ select.text-field-input {
   letter-spacing: .08em;
 }
 
-/* ── Modal de confirmación (popup grande) ────────── */
+/* ── Modal de confirmación (popup grande) ──────────── */
 .modal-confirm-sheet {
   background: var(--md-surface);
   border-radius: var(--shape-xl) var(--shape-xl) 0 0;
-  padding: 16px 16px 32px;
+  padding: 16px 16px 0;
   width: 100%;
-  max-height: 88dvh;
+  /* vh como fallback para browsers que no soportan dvh */
+  max-height: 90vh;
+  max-height: 90dvh;
   display: flex;
   flex-direction: column;
   animation: slide-up .45s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -945,13 +947,37 @@ select.text-field-input {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  margin: 0 -4px 14px;
+  margin: 0 -4px 12px;
   padding: 0 4px;
+  /* mínimo para que los datos sean legibles antes del botón */
+  min-height: 80px;
   scrollbar-width: thin;
   scrollbar-color: var(--md-outline-variant) transparent;
 }
 .confirm-details-scroll::-webkit-scrollbar { width: 4px; }
 .confirm-details-scroll::-webkit-scrollbar-thumb { background: var(--md-outline-variant); border-radius: 2px; }
+
+/* Footer de botones: siempre visible al pie del modal */
+.confirm-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0;
+  /* Safe area para iPhone con indicador de inicio */
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: var(--md-surface);
+}
+
+/* Forzar color de texto en botones dentro del modal (mobile fix) */
+.confirm-footer .btn-filled-success,
+.confirm-footer .btn-filled-salida {
+  color: #fff !important;
+}
+.confirm-footer .btn-filled-success span,
+.confirm-footer .btn-filled-salida span {
+  color: #fff !important;
+}
 
 /* ── Alert dentro del modal confirm ──────────────── */
 #alert-confirmar .alert { margin: 0 0 12px; }

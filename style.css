@@ -705,16 +705,48 @@ body {
 .modal-sub   { font-size: .875rem; color: var(--md-on-surface-var); margin-bottom: 20px; }
 
 /* ── Stats grid ──────────────────────────────────── */
-.stats-grid {
-  display: grid; grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px; margin-bottom: 20px;
-}
-.stat-card {
+/* Stats compactos: fila horizontal pill */
+.stats-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: var(--md-surface-1);
-  border-radius: var(--shape-sm);
-  padding: 14px 10px; text-align: center;
   border: 1px solid var(--md-outline-variant);
+  border-radius: var(--shape-sm);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  gap: 0;
 }
+.stat-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+.stat-pill-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--md-on-surface);
+}
+.stat-pill-lbl {
+  font-size: .65rem;
+  color: var(--md-on-surface-var);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+.stat-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--md-outline-variant);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+/* Mantener compatibilidad con el panel admin que usa stat-card */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.stat-card  { background: var(--md-surface-1); border-radius: var(--shape-sm); padding: 14px 10px; text-align: center; border: 1px solid var(--md-outline-variant); }
 .stat-num   { font-size: 1.75rem; font-weight: 700; line-height: 1; }
 .stat-label { font-size: .7rem; color: var(--md-on-surface-var); margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
 
@@ -787,48 +819,60 @@ select.text-field-input {
 .btn.btn-filled-salida:hover  { box-shadow: var(--elev-3); filter: brightness(1.06); transform: translateY(-2px); }
 .btn.btn-filled-salida:active { box-shadow: none; transform: translateY(1px) scale(0.98); }
 
-/* ── Chips de criterio de búsqueda ───────────────── */
-.search-chips-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 0 16px 12px;
-  scrollbar-width: none;
-}
-.search-chips-wrap::-webkit-scrollbar { display: none; }
-
-.search-chips {
-  display: flex;
+/* ── Grilla 2x3 de criterios de búsqueda ────────── */
+.search-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
-  width: max-content;
-  min-width: 100%;
+  padding: 0 16px 14px;
 }
 
-.chip {
-  display: inline-flex;
+.search-grid-btn {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6px 16px;
-  border-radius: var(--shape-full);
-  border: 1.5px solid var(--md-outline-variant);
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: var(--shape-sm);
+  border: 2px solid var(--md-outline-variant);
   background: var(--md-surface);
   color: var(--md-on-surface-var);
   font-family: 'Roboto', system-ui, sans-serif;
   font-size: .8125rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
-  flex-shrink: 0;
+  user-select: none;
+  min-height: 64px;
+}
+.search-grid-btn svg { flex-shrink: 0; opacity: .7; }
+.search-grid-btn:hover  { background: var(--md-surface-1); border-color: var(--md-primary); color: var(--md-primary); }
+.search-grid-btn:hover svg { opacity: 1; }
+.search-grid-btn:active { transform: scale(0.95); }
+.search-grid-btn.active {
+  background: var(--md-primary-container);
+  border-color: var(--md-primary);
+  color: var(--md-primary);
+  box-shadow: var(--elev-1);
+}
+.search-grid-btn.active svg { opacity: 1; }
+
+/* Mantener compatibilidad con .chip por si se usa en otro lado */
+.chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 6px 16px; border-radius: var(--shape-full);
+  border: 1.5px solid var(--md-outline-variant);
+  background: var(--md-surface); color: var(--md-on-surface-var);
+  font-family: 'Roboto', system-ui, sans-serif;
+  font-size: .8125rem; font-weight: 500; cursor: pointer;
+  transition: var(--transition); white-space: nowrap;
+  -webkit-tap-highlight-color: transparent; flex-shrink: 0;
 }
 .chip:hover  { background: var(--md-surface-1); border-color: var(--md-outline); }
 .chip:active { background: var(--md-surface-2); transform: scale(0.96); }
-.chip.active {
-  background: var(--md-primary);
-  color: var(--md-on-primary);
-  border-color: var(--md-primary);
-  box-shadow: var(--elev-1);
-}
+.chip.active { background: var(--md-primary); color: var(--md-on-primary); border-color: var(--md-primary); box-shadow: var(--elev-1); }
 
 /* ── Input de búsqueda con estilo DNI (numérico) ─── */
 .text-field-input.input-busqueda-dni {

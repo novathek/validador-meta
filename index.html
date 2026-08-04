@@ -136,16 +136,32 @@
         <p class="screen-desc">Elegí el criterio y escribí el valor</p>
       </div>
 
-      <!-- Chips de criterio de búsqueda -->
-      <div class="search-chips-wrap">
-        <div class="search-chips" id="search-chips">
-          <button class="chip active" data-type="dni"      id="chip-dni"      onclick="App.selectCriteria('dni')">DNI</button>
-          <button class="chip"        data-type="nombre"   id="chip-nombre"   onclick="App.selectCriteria('nombre')">Nombre</button>
-          <button class="chip"        data-type="apellido" id="chip-apellido" onclick="App.selectCriteria('apellido')">Apellido</button>
-          <button class="chip"        data-type="cuit"     id="chip-cuit"     onclick="App.selectCriteria('cuit')">CUIT</button>
-          <button class="chip"        data-type="celular"  id="chip-celular"  onclick="App.selectCriteria('celular')">Celular</button>
-          <button class="chip"        data-type="mail"     id="chip-mail"     onclick="App.selectCriteria('mail')">Mail</button>
-        </div>
+      <!-- Grilla 2x3 de criterios de búsqueda (opción C: chips grandes fijos) -->
+      <div class="search-grid" id="search-chips">
+        <button class="search-grid-btn active" data-type="dni"      id="chip-dni"      onclick="App.selectCriteria('dni')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>
+          DNI
+        </button>
+        <button class="search-grid-btn" data-type="nombre"   id="chip-nombre"   onclick="App.selectCriteria('nombre')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Nombre
+        </button>
+        <button class="search-grid-btn" data-type="apellido" id="chip-apellido" onclick="App.selectCriteria('apellido')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Apellido
+        </button>
+        <button class="search-grid-btn" data-type="cuit"     id="chip-cuit"     onclick="App.selectCriteria('cuit')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          CUIT
+        </button>
+        <button class="search-grid-btn" data-type="celular"  id="chip-celular"  onclick="App.selectCriteria('celular')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          Celular
+        </button>
+        <button class="search-grid-btn" data-type="mail"     id="chip-mail"     onclick="App.selectCriteria('mail')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Mail
+        </button>
       </div>
 
       <div style="padding: 0 16px;">
@@ -346,9 +362,6 @@
 
       <div style="display:flex;flex-direction:column;gap:10px;padding:0 0 8px;">
         <button class="btn btn-filled-success" id="btn-confirmar" onclick="App.confirmar()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
           <span id="btn-confirmar-text">Confirmar</span>
           <div class="spinner" id="spinner-confirmar" style="display:none;"></div>
         </button>
@@ -374,28 +387,32 @@
       </div>
       <div class="modal-sub">Registros totales acumulados</div>
 
-      <!-- Stats -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-num" id="stat-total">—</div>
-          <div class="stat-label">Total</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="stat-viernes" style="color:var(--md-primary)">—</div>
-          <div class="stat-label">Viernes 7</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="stat-sabado" style="color:var(--md-secondary)">—</div>
-          <div class="stat-label">Sábado 8</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="stat-completos" style="color:#1B873A">—</div>
-          <div class="stat-label">Completos</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="stat-excepcionales" style="color:#6D28D9">—</div>
-          <div class="stat-label">Excepcionales</div>
-        </div>
+      <!-- Stats compacto: fila horizontal en lugar de grilla -->
+      <div class="stats-inline">
+        <span class="stat-pill">
+          <span class="stat-pill-num" id="stat-total">—</span>
+          <span class="stat-pill-lbl">Total</span>
+        </span>
+        <span class="stat-divider"></span>
+        <span class="stat-pill">
+          <span class="stat-pill-num" id="stat-viernes" style="color:var(--md-primary)">—</span>
+          <span class="stat-pill-lbl">Vie 7</span>
+        </span>
+        <span class="stat-divider"></span>
+        <span class="stat-pill">
+          <span class="stat-pill-num" id="stat-sabado" style="color:var(--md-secondary)">—</span>
+          <span class="stat-pill-lbl">Sáb 8</span>
+        </span>
+        <span class="stat-divider"></span>
+        <span class="stat-pill">
+          <span class="stat-pill-num" id="stat-completos" style="color:#1B873A">—</span>
+          <span class="stat-pill-lbl">Completos</span>
+        </span>
+        <span class="stat-divider"></span>
+        <span class="stat-pill">
+          <span class="stat-pill-num" id="stat-excepcionales" style="color:#6D28D9">—</span>
+          <span class="stat-pill-lbl">Excepc.</span>
+        </span>
       </div>
 
       <!-- Tabs -->
@@ -424,17 +441,9 @@
         </div>
       </div>
 
-      <!-- Botones -->
-      <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
-        <button class="btn btn-filled" id="btn-export-excel" onclick="App.exportExcel()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Exportar a Excel
-        </button>
-        <button class="btn btn-outlined" onclick="App.closePanel()">Cerrar</button>
+      <!-- Botón cerrar -->
+      <div style="margin-top:12px;">
+        <button class="btn btn-outlined" onclick="App.closePanel()" style="width:100%;">Cerrar</button>
       </div>
     </div>
   </div>

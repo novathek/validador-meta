@@ -16,6 +16,54 @@ try {
   db = null;
 }
 
+// ── Cache local de registros Firestore ──────────────────────────
+// Evita consultar Firestore en cada búsqueda. El listener onSnapshot
+// mantiene el Map actualizado en tiempo real desde cualquier dispositivo.
+const RecordCache = {
+  map: new Map(), // clave: 'dia:idKey' → objeto registro
+
+  _key(dia, idKey) { return `${dia}:${String(idKey)}`; },
+
+  // Devuelve el registro (o null) de forma instantánea
+  get(dia, idKey) {
+    return this.map.get(this._key(dia, idKey)) || null;
+  },
+
+  // Guarda o actualiza un registro en el Map
+  set(dia, idKey, record) {
+    this.map.set(this._key(dia, idKey), record);
+  },
+
+  // Aplica actualizaciones parciales a un registro existente
+  patch(dia, idKey, updates) {
+    const existing = this.get(dia, idKey);
+    if (existing) this.map.set(this._key(dia, idKey), { ...existing, ...updates });
+  },
+
+  // Elimina un registro del Map
+  delete(dia, idKey) {
+    this.map.delete(this._key(dia, idKey));
+  },
+
+  // Array de todos los registros (para el panel)
+  all() { return Array.from(this.map.values()); },
+};
+
+// Iniciar listener en tiempo real: sincroniza el cache con Firestore
+if (db) {
+  db.collection('asistencia_meta')
+    .onSnapshot(snap => {
+      RecordCache.map.clear();
+      snap.docs.forEach(doc => {
+        const d = doc.data();
+        if (d.dia && d.idKey) {
+          RecordCache.set(d.dia, d.idKey, { id: doc.id, ...d });
+        }
+      });
+      console.log(`[Cache] ${RecordCache.map.size} registros sincronizados`);
+    }, err => console.warn('[Cache] error de sincronización:', err));
+}
+
 // ── Utilidades ──────────────────────────────────────────────────
 function hoyISO() {
   const now = new Date();
@@ -194,8 +242,8 @@ const App = {
   selectCriteria(type, focusInput = true) {
     State.criteria = type;
 
-    // Actualizar chips
-    document.querySelectorAll('.chip').forEach(c => {
+    // Actualizar botones de criterio (funciona con chips o grilla)
+    document.querySelectorAll('.chip, .search-grid-btn').forEach(c => {
       c.classList.toggle('active', c.dataset.type === type);
     });
 
@@ -239,7 +287,7 @@ const App = {
   },
 
   // ── Búsqueda ─────────────────────────────────────────────
-  async buscar() {
+  buscar() {
     const query = document.getElementById('input-busqueda').value.trim();
     if (!query) return;
 
@@ -250,8 +298,6 @@ const App = {
     const dataset = State.dia === 'viernes7' ? DB.directivos : DB.docentes;
     const resultados = searchPersonas(dataset, State.criteria, query);
 
-    await new Promise(r => setTimeout(r, 200)); // pequeño delay UX
-
     setLoading('btn-buscar', 'spinner-buscar', 'btn-buscar-text', false);
 
     if (resultados.length === 0) {
@@ -261,8 +307,8 @@ const App = {
     }
 
     if (resultados.length === 1) {
-      // Un único resultado → ir directo al popup
-      await this._seleccionarPersona(resultados[0]);
+      // Un único resultado → ir directo al popup (instantáneo)
+      this._seleccionarPersona(resultados[0]);
       return;
     }
 
@@ -288,33 +334,14 @@ const App = {
 
   _tempResults: [],
 
-  // ── Seleccionar persona de la lista → mostrar popup ────────
-  async _seleccionarPersona(persona) {
+  // ── Seleccionar persona → mostrar popup (INSTANTÁNEO, usa cache) ─
+  _seleccionarPersona(persona) {
     State.persona = persona;
-
-    // Consultar si ya tiene registro en Firestore
-    const registro = await this._checkRegistro(persona);
-    State.registroActual = registro;
-
-    this._mostrarConfirmacion(persona, registro);
-  },
-
-  // ── Verificar registro existente en Firestore ───────────────
-  async _checkRegistro(persona) {
-    if (!db) return null;
+    // Consulta al Map local — sin red, sin espera
     const idKey = persona.DNI || persona.CUIT || '';
-    if (!idKey) return null;
-    try {
-      const snap = await db.collection('asistencia_meta')
-        .where('dia',   '==', State.dia)
-        .where('idKey', '==', idKey)
-        .limit(1).get();
-      if (snap.empty) return null;
-      return { id: snap.docs[0].id, ...snap.docs[0].data() };
-    } catch (e) {
-      console.warn('Firestore error:', e);
-      return null;
-    }
+    const registro = RecordCache.get(State.dia, idKey);
+    State.registroActual = registro;
+    this._mostrarConfirmacion(persona, registro);
   },
 
   // ── Mostrar modal de confirmación ───────────────────────────
@@ -370,17 +397,22 @@ const App = {
     // Botón de confirmar
     const btnConfirmar = document.getElementById('btn-confirmar');
     const btnText = document.getElementById('btn-confirmar-text');
+    const spinner  = document.getElementById('spinner-confirmar');
+    // Siempre resetear el spinner al abrir el modal
+    if (spinner) spinner.style.display = 'none';
+    btnConfirmar.disabled = false;
+
     if (estado === 'completo') {
       btnConfirmar.disabled = true;
       btnText.textContent = 'Asistencia ya registrada';
       btnConfirmar.className = 'btn btn-outlined';
     } else {
-      btnConfirmar.disabled = false;
       btnText.textContent = estado === 'entrada' ? 'Confirmar entrada' : 'Confirmar salida';
       btnConfirmar.className = estado === 'entrada' ? 'btn btn-filled-success' : 'btn btn-filled-salida';
     }
 
     setAlert('alert-confirmar', '', '');
+
 
     // Abrir modal
     document.getElementById('modal-confirm').classList.add('open');
@@ -418,7 +450,6 @@ const App = {
 
     try {
       if (estado === 'entrada') {
-        // Primera vez: crear registro con entrada
         const record = {
           dia:    State.dia,
           hoja,
@@ -432,14 +463,38 @@ const App = {
           timestamp_salida:  null,
           datos: persona,
         };
-        if (db) await db.collection('asistencia_meta').add(record);
+        // Guardar en Firestore y esperar confirmación
+        if (db) {
+          const ref = await db.collection('asistencia_meta').add(record);
+          // Actualizar caché con el id real de Firestore
+          RecordCache.set(State.dia, idKey, { id: ref.id, ...record });
+        }
       } else {
         // Segunda vez: actualizar con salida
-        if (db) await db.collection('asistencia_meta').doc(registro.id).update({
+        // Leer id real del caché (puede haber sido actualizado por onSnapshot)
+        const registroActual = RecordCache.get(State.dia, idKey) || registro;
+        const docId = registroActual ? registroActual.id : null;
+        const updates = {
           salida: ahora,
           timestamp_salida: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+        };
+        if (db && docId && docId !== '_pending_') {
+          // Id confirmado: actualizar directamente
+          await db.collection('asistencia_meta').doc(docId).update(updates);
+        } else if (db) {
+          // Fallback: buscar el doc en Firestore por dia + idKey
+          const snap = await db.collection('asistencia_meta')
+            .where('dia',   '==', State.dia)
+            .where('idKey', '==', String(idKey))
+            .limit(1).get();
+          if (!snap.empty) {
+            await snap.docs[0].ref.update(updates);
+          }
+        }
+        // Actualizar caché local
+        RecordCache.patch(State.dia, idKey, updates);
       }
+
 
       this.closeConfirm();
       this._mostrarExito(
@@ -518,7 +573,12 @@ const App = {
     };
 
     try {
-      if (db) await db.collection('asistencia_meta').add(record);
+      if (db) {
+        // Guardar en Firestore y esperar confirmación
+        const ref = await db.collection('asistencia_meta').add(record);
+        // Actualizar caché con el id real
+        RecordCache.set(campos.dia, idKey, { id: ref.id, ...record });
+      }
       setLoading('btn-inscribir-exc', 'spinner-excepcional', 'btn-inscribir-exc-text', false);
       State.returnScreen = 'screen-home';
       this._mostrarExito(
@@ -545,16 +605,16 @@ const App = {
 
     if (esNuevo) {
       sub.textContent = 'Inscripción y asistencia registradas';
-      badge.innerHTML = `<span class="status-badge badge-excepcional">Caso excepcional</span>`;
-      det.innerHTML   = `Entrada registrada a las <strong>${hora}</strong>`;
+      badge.innerHTML = `<span class="status-badge badge-excepcional">Caso excepcional · ${hora}</span>`;
+      det.innerHTML   = '';
     } else if (tipo === 'entrada') {
       sub.textContent = 'Entrada registrada correctamente';
       badge.innerHTML = `<span class="status-badge badge-entrada">Entrada · ${hora}</span>`;
-      det.innerHTML   = `Hora de entrada: <strong>${hora}</strong>`;
+      det.innerHTML   = '';
     } else {
       sub.textContent = 'Salida registrada correctamente';
       badge.innerHTML = `<span class="status-badge badge-salida">Salida · ${hora}</span>`;
-      det.innerHTML   = `Hora de salida: <strong>${hora}</strong>`;
+      det.innerHTML   = '';
     }
 
     // Restart countdown animation
@@ -594,22 +654,11 @@ const App = {
     if (e.target === document.getElementById('modal-panel')) this.closePanel();
   },
 
-  async _loadPanel() {
-    if (!db) {
-      this._renderPanel([]);
-      return;
-    }
-    try {
-      const snap = await db.collection('asistencia_meta')
-        .orderBy('timestamp_entrada', 'desc')
-        .get();
-      State.panelRecords = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      this._updateStats(State.panelRecords);
-      this._renderPanel(State.panelRecords);
-    } catch (e) {
-      console.warn('Firestore error:', e);
-      this._renderPanel([]);
-    }
+  _loadPanel() {
+    // Usa el cache local — sin consulta a Firestore, instantáneo
+    State.panelRecords = RecordCache.all();
+    this._updateStats(State.panelRecords);
+    this._renderPanel(State.panelRecords);
   },
 
   _updateStats(records) {

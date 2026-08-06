@@ -338,8 +338,42 @@
   </div><!-- #app -->
 
   <!-- ════════════════════════════════════════════
+       MODAL — SELECCIÓN DE GRADO/AÑO Y ESPECIALIDAD (Docentes)
+       Aparece solo cuando el docente tiene múltiples valores.
+  ════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-seleccion" onclick="App.closeSeleccionIfOutside(event)">
+    <div class="modal-confirm-sheet" id="modal-seleccion-sheet">
+      <div class="modal-handle"></div>
+
+      <!-- Header -->
+      <div class="confirm-status-banner banner-seleccion" id="seleccion-banner">
+        <span id="seleccion-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </span>
+        <span id="seleccion-titulo">Seleccioná una opción</span>
+      </div>
+
+      <div class="confirm-person-name" id="seleccion-person-name"></div>
+      <p class="seleccion-desc" id="seleccion-desc"></p>
+
+      <!-- Opciones (se generan dinámicamente) -->
+      <div class="seleccion-opciones" id="seleccion-opciones"></div>
+
+      <div id="alert-seleccion"></div>
+
+      <div class="confirm-footer" style="margin-top:8px;">
+        <button class="btn btn-filled" id="btn-confirmar-seleccion" onclick="App.confirmarSeleccion()">
+          Confirmar selección
+        </button>
+        <button class="btn btn-outlined" onclick="App.closeSeleccion()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
        MODAL — CONFIRMACIÓN DE ASISTENCIA (Popup)
   ════════════════════════════════════════════ -->
+
   <div class="modal-overlay" id="modal-confirm" onclick="App.closeConfirmIfOutside(event)">
     <div class="modal-confirm-sheet" id="modal-confirm-sheet">
       <div class="modal-handle"></div>

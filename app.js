@@ -88,26 +88,37 @@ function fuzzyMatch(text, query) {
   return words.every(w => t.includes(w));
 }
 
-// ── Labels en español para mostrar datos ────────────────────────
-const LABELS_DIR = {
-  ROL: 'Rol', NOMBRE: 'Nombre', APELLIDO: 'Apellido',
-  NACIONALIDAD: 'Nacionalidad', DOCUMENTO: 'Tipo doc.',
-  DNI: 'DNI', EMAIL: 'Email', EMAIL_2: 'Email 2',
-  SEXO: 'Sexo', NACIMIENTO: 'Nacimiento', POSTAL: 'Cód. Postal',
-  PAIS: 'País', CELULAR: 'Celular', CUIT: 'CUIT',
-  DEPARTAMENTO: 'Departamento', NIVEL: 'Nivel', NODO: 'Nodo',
-  INSTITUCION: 'Institución',
+// ── Labels en español para mostrar datos (esquema unificado) ────
+const LABELS = {
+  TIPO:         'Tipo',
+  DNI:          'DNI',
+  NOMBRE:       'Nombre',
+  APELLIDO:     'Apellido',
+  ROL:          'Rol',
+  EMAIL:        'Email',
+  CELULAR:      'Celular',
+  CUIT:         'CUIT/CUIL',
+  SEXO:         'Sexo',
+  NACIMIENTO:   'Nacimiento',
+  DEPARTAMENTO: 'Departamento',
+  ESCUELA:      'Escuela',
+  NODO:         'Nodo',
+  CURSO:        'Curso',
+  NACIONALIDAD: 'Nacionalidad',
+  DOMICILIO:    'Domicilio',
+  CODIGO_POSTAL:'Cód. Postal',
+  PAIS:         'País',
+  PROVINCIA:    'Provincia',
+  GRADO_ANO:    'Grado/Año',
+  ESPECIALIDAD: 'Especialidad',
+  DIRECCION:    'Dirección',
+  POSTAL:       'Cód. Postal',
+  LOCALIDAD:    'Localidad',
+  MARCA_TEMPORAL: 'Fecha de inscripción',
 };
-
-const LABELS_DOC = {
-  NOMBRE: 'Nombre', APELLIDO: 'Apellido', NACIONALIDAD: 'Nacionalidad',
-  DOCUMENTO: 'Tipo doc.', DNI: 'DNI', EMAIL: 'Email',
-  SEXO: 'Sexo', NACIMIENTO: 'Nacimiento', DOMICILIO: 'Domicilio',
-  CODIGO_POSTAL: 'Cód. Postal', PAIS: 'País', PROVINCIA: 'Provincia',
-  DEPARTAMENTO: 'Departamento', CELULAR: 'Celular', CUIT: 'CUIT',
-  ESCUELA: 'Escuela', GRADO_ANO: 'Grado/Año', MATERIA: 'Materia',
-  CURSO: 'Curso',
-};
+// Alias para compatibilidad (los dos días usan el mismo objeto)
+const LABELS_DIR = LABELS;
+const LABELS_DOC = LABELS;
 
 // ── Estado global ───────────────────────────────────────────────
 const State = {
@@ -118,6 +129,8 @@ const State = {
   panelTab:      'todos',
   panelRecords:  [],
   returnScreen:  'screen-busqueda',
+  // Selección obligatoria de campos múltiples (docentes)
+  seleccionPendiente: null,  // { campo, opciones, seleccionada }
 };
 
 // ── Navegación ──────────────────────────────────────────────────
@@ -295,7 +308,10 @@ const App = {
     setAlert('alert-busqueda', '', '');
     document.getElementById('results-busqueda').innerHTML = '';
 
-    const dataset = State.dia === 'viernes7' ? DB.directivos : DB.docentes;
+    // Viernes = directivos + supervisores (DB_VIERNES); Sábado = docentes (DB_SABADO)
+    const dataset = State.dia === 'viernes7'
+      ? (typeof DB_VIERNES !== 'undefined' ? DB_VIERNES : DB.directivos)
+      : (typeof DB_SABADO  !== 'undefined' ? DB_SABADO  : DB.docentes);
     const resultados = searchPersonas(dataset, State.criteria, query);
 
     setLoading('btn-buscar', 'spinner-buscar', 'btn-buscar-text', false);
@@ -334,14 +350,141 @@ const App = {
 
   _tempResults: [],
 
-  // ── Seleccionar persona → mostrar popup (INSTANTÁNEO, usa cache) ─
+  // ── Parsear campo con múltiples valores ──────────────────
+  // Soporta separador coma (",") y " y " (para especialidades)
+  _parsearOpciones(valor) {
+    if (!valor) return [];
+    // Primero intentar con coma
+    const porComa = valor.split(',').map(v => v.trim()).filter(Boolean);
+    if (porComa.length > 1) return porComa;
+    // Si no, intentar con " y "
+    const porY = valor.split(/\s+y\s+/i).map(v => v.trim()).filter(Boolean);
+    if (porY.length > 1) return porY;
+    return []; // un solo valor
+  },
+
+  // Devuelve lista de campos que necesitan selección (sólo docentes, sólo en entrada)
+  _camposConMultiples(persona) {
+    if (persona.TIPO !== 'docente') return [];
+    const campos = [];
+    if (this._parsearOpciones(persona.GRADO_ANO).length > 1) {
+      campos.push({ campo: 'GRADO_ANO', label: 'Grado/Año', valor: persona.GRADO_ANO });
+    }
+    if (this._parsearOpciones(persona.ESPECIALIDAD).length > 1) {
+      campos.push({ campo: 'ESPECIALIDAD', label: 'Especialidad', valor: persona.ESPECIALIDAD });
+    }
+    return campos;
+  },
+
+  // ── Flujo de selección múltiple ───────────────────────
+  // Cola de campos pendientes de selección
+  _seleccionQueue: [],
+
+  _iniciarSeleccionSiNecesario(persona, registro) {
+    // Solo aplica a docentes en estado "entrada" (nunca en salida/completo)
+    const estado = !registro ? 'entrada'
+      : (registro.entrada && !registro.salida) ? 'salida' : 'completo';
+
+    if (estado !== 'entrada' || persona.TIPO !== 'docente') {
+      // Ir directo a la confirmación
+      this._mostrarConfirmacion(persona, registro);
+      return;
+    }
+
+    const camposMultiples = this._camposConMultiples(persona);
+    if (camposMultiples.length === 0) {
+      this._mostrarConfirmacion(persona, registro);
+      return;
+    }
+
+    // Clonar persona para ir editando los campos seleccionados
+    State.persona = { ...persona };
+    this._seleccionQueue = camposMultiples.slice(); // copia
+    this._mostrarSiguienteSeleccion();
+  },
+
+  _mostrarSiguienteSeleccion() {
+    if (this._seleccionQueue.length === 0) {
+      // Ya resolvieron todos los campos → continuar con confirmación
+      this._mostrarConfirmacion(State.persona, State.registroActual);
+      return;
+    }
+
+    const { campo, label, valor } = this._seleccionQueue[0];
+    const opciones = this._parsearOpciones(valor);
+    const persona  = State.persona;
+    const totalCampos = this._camposConMultiples({ ...persona, [campo]: valor }).length;
+    const restantes   = this._seleccionQueue.length;
+
+    // Título del banner
+    document.getElementById('seleccion-titulo').textContent = `Elegí tu ${label}`;
+    document.getElementById('seleccion-person-name').textContent =
+      `${persona.NOMBRE || ''} ${persona.APELLIDO || ''}`.trim();
+    document.getElementById('seleccion-desc').textContent =
+      `Estás inscripto/a en más de una opción. ` +
+      `Selecioná el ${label} en el que vas a participar hoy. Es obligatorio elegir una opción para continuar.`;
+
+    // Generar botones de opción
+    const contenedor = document.getElementById('seleccion-opciones');
+    contenedor.innerHTML = opciones.map((op, i) => `
+      <button class="seleccion-opcion" id="seleccion-opcion-${i}"
+        onclick="App._toggleOpcion(${i})" type="button">
+        <span class="opcion-radio"></span>
+        <span class="opcion-label">${op}</span>
+      </button>`).join('');
+
+    // Limpiar alerta
+    document.getElementById('alert-seleccion').innerHTML = '';
+
+    // Guardar estado del campo actual
+    State.seleccionPendiente = { campo, label, opciones, seleccionada: null };
+
+    document.getElementById('modal-seleccion').classList.add('open');
+  },
+
+  _toggleOpcion(idx) {
+    // Deseleccionar todos
+    document.querySelectorAll('.seleccion-opcion').forEach(btn => btn.classList.remove('selected'));
+    // Seleccionar el elegido
+    const btn = document.getElementById(`seleccion-opcion-${idx}`);
+    if (btn) btn.classList.add('selected');
+    // Guardar selección
+    State.seleccionPendiente.seleccionada = State.seleccionPendiente.opciones[idx];
+    document.getElementById('alert-seleccion').innerHTML = '';
+  },
+
+  confirmarSeleccion() {
+    const sp = State.seleccionPendiente;
+    if (!sp || !sp.seleccionada) {
+      document.getElementById('alert-seleccion').innerHTML =
+        `<div class="alert warning">Debés seleccionar una opción de ${sp ? sp.label : 'campo'} para continuar.</div>`;
+      return;
+    }
+    // Aplicar la selección a la persona
+    State.persona = { ...State.persona, [sp.campo]: sp.seleccionada };
+    // Sacar este campo de la cola
+    this._seleccionQueue.shift();
+    // Cerrar modal y pasar al siguiente
+    document.getElementById('modal-seleccion').classList.remove('open');
+    setTimeout(() => this._mostrarSiguienteSeleccion(), 200);
+  },
+
+  closeSeleccion() {
+    document.getElementById('modal-seleccion').classList.remove('open');
+  },
+
+  closeSeleccionIfOutside(e) {
+    if (e.target === document.getElementById('modal-seleccion')) this.closeSeleccion();
+  },
+
+  // ── Seleccionar persona → verificar campos múltiples primero ────
   _seleccionarPersona(persona) {
     State.persona = persona;
-    // Consulta al Map local — sin red, sin espera
     const idKey = persona.DNI || persona.CUIT || '';
     const registro = RecordCache.get(State.dia, idKey);
     State.registroActual = registro;
-    this._mostrarConfirmacion(persona, registro);
+    // Verificar si necesita selección de campos múltiples antes de confirmar
+    this._iniciarSeleccionSiNecesario(persona, registro);
   },
 
   // ── Mostrar modal de confirmación ───────────────────────────
@@ -379,10 +522,8 @@ const App = {
       `${persona.NOMBRE || ''} ${persona.APELLIDO || ''}`.trim();
 
     // Todos los datos
-    const labels = State.dia === 'viernes7' ? LABELS_DIR : LABELS_DOC;
-    const campos = HEADERS
-      ? (State.dia === 'viernes7' ? HEADERS.directivos : HEADERS.docentes)
-      : Object.keys(persona);
+    const labels = LABELS;
+    const campos = Object.keys(persona);
 
     const rows = campos
       .filter(key => labels[key] && persona[key] != null && persona[key] !== '')
@@ -446,7 +587,12 @@ const App = {
 
     const idKey = persona.DNI || persona.CUIT || '';
     const ahora = horaLocal();
-    const hoja  = State.dia === 'viernes7' ? 'DIRECTIVOS' : 'DOCENTES';
+    // Hoja refleja el tipo real de la persona
+    const tipoPersona = persona.TIPO || '';
+    const hoja = tipoPersona === 'supervisor' ? 'SUPERVISORES'
+               : tipoPersona === 'directivo'  ? 'DIRECTIVOS'
+               : tipoPersona === 'docente'    ? 'DOCENTES'
+               : (State.dia === 'viernes7'    ? 'DIRECTIVOS' : 'DOCENTES');
 
     try {
       if (estado === 'entrada') {

@@ -464,8 +464,8 @@ const Admin = {
         'Cód. Postal':       persona.CODIGO_POSTAL || persona.POSTAL || '',
         'País':              persona.PAIS         || '',
         'Provincia':         persona.PROVINCIA    || '',
-        'Grado/Año':         persona.GRADO_ANO    || '',
-        'Especialidad':      persona.ESPECIALIDAD || '',
+        'Grado/Año':         (asist && asist.datos && asist.datos.GRADO_ANO)    || persona.GRADO_ANO    || '',
+        'Especialidad':      (asist && asist.datos && asist.datos.ESPECIALIDAD) || persona.ESPECIALIDAD || '',
         'Localidad':         persona.LOCALIDAD    || '',
         'Fecha inscripción': persona.MARCA_TEMPORAL || '',
         // Asistencia

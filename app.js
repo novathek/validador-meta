@@ -539,8 +539,9 @@ const App = {
     const btnConfirmar = document.getElementById('btn-confirmar');
     const btnText = document.getElementById('btn-confirmar-text');
     const spinner  = document.getElementById('spinner-confirmar');
-    // Siempre resetear el spinner al abrir el modal
+    // Siempre resetear el botón al abrir el modal (por si quedó en estado loading)
     if (spinner) spinner.style.display = 'none';
+    if (btnText) btnText.style.display = 'inline';
     btnConfirmar.disabled = false;
 
     if (estado === 'completo') {

@@ -95,7 +95,10 @@ const Admin = {
     document.getElementById('stat-total').textContent     = r.length;
     document.getElementById('stat-viernes').textContent   = r.filter(x => x.dia === 'viernes7').length;
     document.getElementById('stat-sabado').textContent    = r.filter(x => x.dia === 'sabado8').length;
-    document.getElementById('stat-completos').textContent = r.filter(x => x.entrada && x.salida).length;
+    // Completo = tiene los 4 registros de turno
+    document.getElementById('stat-completos').textContent = r.filter(x =>
+      x.entrada_manana && x.salida_manana && x.entrada_tarde && x.salida_tarde
+    ).length;
     document.getElementById('stat-nuevos').textContent    = r.filter(x => x.esNuevo).length;
   },
 
@@ -113,16 +116,14 @@ const Admin = {
     let filtered = this.records;
 
     switch (this.currentFilter) {
-      case 'viernes7':
-        filtered = filtered.filter(r => r.dia === 'viernes7'); break;
-      case 'sabado8':
-        filtered = filtered.filter(r => r.dia === 'sabado8'); break;
-      case 'excepcional':
-        filtered = filtered.filter(r => r.esNuevo); break;
+      case 'viernes7':    filtered = filtered.filter(r => r.dia === 'viernes7'); break;
+      case 'sabado8':     filtered = filtered.filter(r => r.dia === 'sabado8'); break;
+      case 'excepcional': filtered = filtered.filter(r => r.esNuevo); break;
       case 'solo-entrada':
-        filtered = filtered.filter(r => r.entrada && !r.salida); break;
+        // Tiene al menos entrada mañana pero no tiene los 4
+        filtered = filtered.filter(r => r.entrada_manana && !(r.entrada_manana && r.salida_manana && r.entrada_tarde && r.salida_tarde)); break;
       case 'completos':
-        filtered = filtered.filter(r => r.entrada && r.salida); break;
+        filtered = filtered.filter(r => r.entrada_manana && r.salida_manana && r.entrada_tarde && r.salida_tarde); break;
     }
 
     if (query.length >= 2) {
@@ -160,10 +161,12 @@ const Admin = {
 
       // Badges
       let badges = '';
-      if (r.entrada && r.salida) {
+      const esCompleto = r.entrada_manana && r.salida_manana && r.entrada_tarde && r.salida_tarde;
+      const tieneMitad = r.entrada_manana || r.salida_manana || r.entrada_tarde;
+      if (esCompleto) {
         badges += `<span class="status-badge badge-completo">Completo</span>`;
-      } else if (r.entrada) {
-        badges += `<span class="status-badge badge-entrada">Solo entrada</span>`;
+      } else if (tieneMitad) {
+        badges += `<span class="status-badge badge-entrada">En progreso</span>`;
       } else {
         badges += `<span class="status-badge badge-pendiente">Pendiente</span>`;
       }
@@ -180,11 +183,9 @@ const Admin = {
           </div>`).join('');
 
       const isExpanded = this.expandedItems.has(r.id);
-      // ID seguro para usar como atributo HTML (sin chars especiales)
       const safeId = r.id.replace(/[^a-zA-Z0-9_-]/g, '_');
 
-      const entradaVal = r.entrada ? r.entrada.replace(/\s/g, '') : '';
-      const salidaVal  = r.salida  ? r.salida.replace(/\s/g, '')  : '';
+      const fmt = v => v ? v.replace(/\s/g, '') : '';
 
       return `
         <div class="admin-item" style="animation-delay:${idx * 0.04}s" id="item-${safeId}">
@@ -198,23 +199,15 @@ const Admin = {
             <div class="admin-item-badges">${badges}</div>
           </div>
 
-          <!-- Horarios actuales -->
+          <!-- Horarios: 4 turnos -->
           <div class="admin-item-horarios" id="horarios-${safeId}">
             <span class="horario-pill">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                <polyline points="10 17 15 12 10 7"/>
-                <line x1="15" y1="12" x2="3" y2="12"/>
-              </svg>
-              Entrada: <strong>${r.entrada || '—'}</strong>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              Mañana: <strong>${r.entrada_manana || '—'}</strong> – <strong>${r.salida_manana || '—'}</strong>
             </span>
             <span class="horario-pill">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-              Salida: <strong>${r.salida || '—'}</strong>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              Tarde: <strong>${r.entrada_tarde || '—'}</strong> – <strong>${r.salida_tarde || '—'}</strong>
             </span>
           </div>
 
@@ -227,17 +220,14 @@ const Admin = {
               </svg>
               Corregir horarios
             </div>
+            <div style="font-size:.8rem;color:var(--md-outline);margin-bottom:8px;">Turno Mañana</div>
             <div class="edit-fields">
               <div class="edit-field-group">
                 <label class="edit-label">Entrada</label>
                 <div class="edit-input-row">
-                  <input class="edit-time-input" id="inp-entrada-${safeId}"
-                    type="time" value="${entradaVal}" />
-                  <button class="btn-clear-time"
-                    onclick="Admin.clearField('${r.id}', 'entrada', '${safeId}')">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
+                  <input class="edit-time-input" id="inp-em-${safeId}" type="time" value="${fmt(r.entrada_manana)}" />
+                  <button class="btn-clear-time" onclick="Admin.clearField('${r.id}', 'entrada_manana', '${safeId}')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     Borrar
                   </button>
                 </div>
@@ -245,29 +235,43 @@ const Admin = {
               <div class="edit-field-group">
                 <label class="edit-label">Salida</label>
                 <div class="edit-input-row">
-                  <input class="edit-time-input" id="inp-salida-${safeId}"
-                    type="time" value="${salidaVal}" />
-                  <button class="btn-clear-time"
-                    onclick="Admin.clearField('${r.id}', 'salida', '${safeId}')">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
+                  <input class="edit-time-input" id="inp-sm-${safeId}" type="time" value="${fmt(r.salida_manana)}" />
+                  <button class="btn-clear-time" onclick="Admin.clearField('${r.id}', 'salida_manana', '${safeId}')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Borrar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div style="font-size:.8rem;color:var(--md-outline);margin:8px 0;">Turno Tarde</div>
+            <div class="edit-fields">
+              <div class="edit-field-group">
+                <label class="edit-label">Entrada</label>
+                <div class="edit-input-row">
+                  <input class="edit-time-input" id="inp-et-${safeId}" type="time" value="${fmt(r.entrada_tarde)}" />
+                  <button class="btn-clear-time" onclick="Admin.clearField('${r.id}', 'entrada_tarde', '${safeId}')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Borrar
+                  </button>
+                </div>
+              </div>
+              <div class="edit-field-group">
+                <label class="edit-label">Salida</label>
+                <div class="edit-input-row">
+                  <input class="edit-time-input" id="inp-st-${safeId}" type="time" value="${fmt(r.salida_tarde)}" />
+                  <button class="btn-clear-time" onclick="Admin.clearField('${r.id}', 'salida_tarde', '${safeId}')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     Borrar
                   </button>
                 </div>
               </div>
             </div>
             <div class="edit-actions">
-              <button class="btn-save-edit" id="btn-save-${safeId}"
-                onclick="Admin.saveEdit('${r.id}', '${safeId}')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
+              <button class="btn-save-edit" id="btn-save-${safeId}" onclick="Admin.saveEdit('${r.id}', '${safeId}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 Guardar cambios
               </button>
-              <button class="btn-cancel-edit" onclick="Admin.toggleEdit('${safeId}', false)">
-                Cancelar
-              </button>
+              <button class="btn-cancel-edit" onclick="Admin.toggleEdit('${safeId}', false)">Cancelar</button>
             </div>
             <div id="edit-alert-${safeId}" style="margin-top:8px;"></div>
           </div>
@@ -356,26 +360,30 @@ const Admin = {
 
   // ── Guardar corrección de horarios ──────────────────────────
   async saveEdit(docId, safeId) {
-    const inpEntrada = document.getElementById(`inp-entrada-${safeId}`);
-    const inpSalida  = document.getElementById(`inp-salida-${safeId}`);
-    const btn        = document.getElementById(`btn-save-${safeId}`);
-    const alertEl    = document.getElementById(`edit-alert-${safeId}`);
-    if (!inpEntrada || !inpSalida) return;
+    const fields = ['em', 'sm', 'et', 'st'];
+    const fieldMap = { em: 'entrada_manana', sm: 'salida_manana', et: 'entrada_tarde', st: 'salida_tarde' };
+    const btn     = document.getElementById(`btn-save-${safeId}`);
+    const alertEl = document.getElementById(`edit-alert-${safeId}`);
 
-    // Convierte "HH:MM" del input type=time al mismo formato
     const toTimeStr = v => {
       if (!v) return null;
       const parts = v.split(':');
-      return parts.length >= 2
-        ? `${parts[0].padStart(2,'0')}:${parts[1].padStart(2,'0')}`
-        : null;
+      return parts.length >= 2 ? `${parts[0].padStart(2,'0')}:${parts[1].padStart(2,'0')}` : null;
     };
 
-    const nuevaEntrada = toTimeStr(inpEntrada.value);
-    const nuevaSalida  = toTimeStr(inpSalida.value);
+    const updates = {};
+    for (const f of fields) {
+      const inp = document.getElementById(`inp-${f}-${safeId}`);
+      if (inp) updates[fieldMap[f]] = toTimeStr(inp.value);
+    }
 
-    if (nuevaEntrada && nuevaSalida && nuevaSalida < nuevaEntrada) {
-      if (alertEl) alertEl.innerHTML = '<div class="alert error">La salida no puede ser anterior a la entrada.</div>';
+    // Validar que dentro de cada turno entrada <= salida
+    if (updates.entrada_manana && updates.salida_manana && updates.salida_manana < updates.entrada_manana) {
+      if (alertEl) alertEl.innerHTML = '<div class="alert error">La salida mañana no puede ser anterior a la entrada mañana.</div>';
+      return;
+    }
+    if (updates.entrada_tarde && updates.salida_tarde && updates.salida_tarde < updates.entrada_tarde) {
+      if (alertEl) alertEl.innerHTML = '<div class="alert error">La salida tarde no puede ser anterior a la entrada tarde.</div>';
       return;
     }
 
@@ -384,21 +392,14 @@ const Admin = {
     if (alertEl) alertEl.innerHTML = '';
 
     try {
-      await db.collection('asistencia_meta').doc(docId).update({
-        entrada: nuevaEntrada,
-        salida:  nuevaSalida,
-      });
+      await db.collection('asistencia_meta').doc(docId).update(updates);
       if (alertEl) alertEl.innerHTML = '<div class="alert success">✔ Horarios actualizados correctamente.</div>';
       setTimeout(() => this.toggleEdit(safeId, false), 1500);
     } catch(e) {
       if (alertEl) alertEl.innerHTML = `<div class="alert error">Error al guardar: ${e.message}</div>`;
     } finally {
       btn.disabled = false;
-      btn.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        Guardar cambios`;
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Guardar cambios`;
     }
   },
 
@@ -468,10 +469,16 @@ const Admin = {
         'Especialidad':      (asist && asist.datos && asist.datos.ESPECIALIDAD) || persona.ESPECIALIDAD || '',
         'Localidad':         persona.LOCALIDAD    || '',
         'Fecha inscripción': persona.MARCA_TEMPORAL || '',
-        // Asistencia
-        'Entrada':           asist ? (asist.entrada || '') : '',
-        'Salida':            asist ? (asist.salida  || '') : '',
-        'Asistió':           asist ? 'Sí' : 'No',
+        // Horarios turno mañana
+        'Entrada Mañana':    asist ? (asist.entrada_manana || '') : '',
+        'Salida Mañana':     asist ? (asist.salida_manana  || '') : '',
+        // Horarios turno tarde
+        'Entrada Tarde':     asist ? (asist.entrada_tarde  || '') : '',
+        'Salida Tarde':      asist ? (asist.salida_tarde   || '') : '',
+        // Resumen
+        'Asistió Mañana':    asist && asist.entrada_manana ? 'Sí' : 'No',
+        'Asistió Tarde':     asist && asist.entrada_tarde  ? 'Sí' : 'No',
+        'Asistencia completa': (asist && asist.entrada_manana && asist.salida_manana && asist.entrada_tarde && asist.salida_tarde) ? 'Sí' : 'No',
         'Caso excepcional':  (asist && asist.esNuevo) ? 'Sí' : '',
       });
 

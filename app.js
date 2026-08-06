@@ -381,11 +381,11 @@ const App = {
   _seleccionQueue: [],
 
   _iniciarSeleccionSiNecesario(persona, registro) {
-    // Solo aplica a docentes en estado "entrada" (nunca en salida/completo)
-    const estado = !registro ? 'entrada'
-      : (registro.entrada && !registro.salida) ? 'salida' : 'completo';
+    // Solo aplica a docentes en estado "entrada_manana" (primera vez que pasan)
+    const r = registro || {};
+    const esEntradaManana = !r.entrada_manana;
 
-    if (estado !== 'entrada' || persona.TIPO !== 'docente') {
+    if (!esEntradaManana || persona.TIPO !== 'docente') {
       // Ir directo a la confirmación
       this._mostrarConfirmacion(persona, registro);
       return;
@@ -487,35 +487,46 @@ const App = {
     this._iniciarSeleccionSiNecesario(persona, registro);
   },
 
-  // ── Mostrar modal de confirmación ───────────────────────────
+  // ── Mostrar modal de confirmación ───────────────────────────────
   _mostrarConfirmacion(persona, registro) {
-    // Determinar estado: ENTRADA o SALIDA o COMPLETO
-    let estado = 'entrada';
-    if (registro && registro.entrada && registro.salida) {
+    // Determinar estado en base a los 4 campos de turno
+    // Secuencia: entrada_manana → salida_manana → entrada_tarde → salida_tarde → completo
+    const r = registro || {};
+    let estado;
+    if (r.entrada_manana && r.salida_manana && r.entrada_tarde && r.salida_tarde) {
       estado = 'completo';
-    } else if (registro && registro.entrada && !registro.salida) {
-      estado = 'salida';
+    } else if (r.entrada_manana && r.salida_manana && r.entrada_tarde && !r.salida_tarde) {
+      estado = 'salida_tarde';
+    } else if (r.entrada_manana && r.salida_manana && !r.entrada_tarde) {
+      estado = 'entrada_tarde';
+    } else if (r.entrada_manana && !r.salida_manana) {
+      estado = 'salida_manana';
+    } else {
+      estado = 'entrada_manana';
     }
 
+    const SVG_ENTRADA = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>`;
+    const SVG_SALIDA  = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
+    const SVG_OK      = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
     // Banner de estado
-    const banner = document.getElementById('confirm-status-banner');
+    const banner     = document.getElementById('confirm-status-banner');
     const statusText = document.getElementById('confirm-status-text');
     const statusIcon = document.getElementById('confirm-status-icon');
     banner.className = 'confirm-status-banner';
 
-    if (estado === 'entrada') {
-      banner.classList.add('banner-entrada');
-      statusIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>`;
-      statusText.textContent = 'Vas a marcar ENTRADA';
-    } else if (estado === 'salida') {
-      banner.classList.add('banner-salida');
-      statusIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
-      statusText.textContent = `Vas a marcar SALIDA — Entrada: ${registro.entrada}`;
-    } else {
-      banner.classList.add('banner-completo');
-      statusIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-      statusText.textContent = `Asistencia completa — Entrada: ${registro.entrada} · Salida: ${registro.salida}`;
-    }
+    const BANNERS = {
+      entrada_manana: { cls: 'banner-entrada-manana', icon: SVG_ENTRADA, text: 'Vas a marcar ENTRADA — Turno Mañana' },
+      salida_manana:  { cls: 'banner-salida-manana',  icon: SVG_SALIDA,  text: `Vas a marcar SALIDA — Turno Mañana (Entrada: ${r.entrada_manana || ''})` },
+      entrada_tarde:  { cls: 'banner-entrada-tarde',  icon: SVG_ENTRADA, text: 'Vas a marcar ENTRADA — Turno Tarde' },
+      salida_tarde:   { cls: 'banner-salida-tarde',   icon: SVG_SALIDA,  text: `Vas a marcar SALIDA — Turno Tarde (Entrada: ${r.entrada_tarde || ''})` },
+      completo:       { cls: 'banner-completo',       icon: SVG_OK,
+        text: `Asistencia completa · M: ${r.entrada_manana||'—'}–${r.salida_manana||'—'} · T: ${r.entrada_tarde||'—'}–${r.salida_tarde||'—'}` },
+    };
+    const b = BANNERS[estado];
+    banner.classList.add(b.cls);
+    statusIcon.innerHTML = b.icon;
+    statusText.textContent = b.text;
 
     // Nombre
     document.getElementById('confirm-person-name').textContent =
@@ -544,17 +555,19 @@ const App = {
     if (btnText) btnText.style.display = 'inline';
     btnConfirmar.disabled = false;
 
-    if (estado === 'completo') {
-      btnConfirmar.disabled = true;
-      btnText.textContent = 'Asistencia ya registrada';
-      btnConfirmar.className = 'btn btn-outlined';
-    } else {
-      btnText.textContent = estado === 'entrada' ? 'Confirmar entrada' : 'Confirmar salida';
-      btnConfirmar.className = estado === 'entrada' ? 'btn btn-filled-success' : 'btn btn-filled-salida';
-    }
+    const BTN_LABELS = {
+      entrada_manana: { text: 'Confirmar entrada mañana', cls: 'btn btn-filled-success' },
+      salida_manana:  { text: 'Confirmar salida mañana',  cls: 'btn btn-filled-salida' },
+      entrada_tarde:  { text: 'Confirmar entrada tarde',  cls: 'btn btn-filled-tarde' },
+      salida_tarde:   { text: 'Confirmar salida tarde',   cls: 'btn btn-filled-salida-tarde' },
+      completo:       { text: 'Asistencia ya completa',   cls: 'btn btn-outlined' },
+    };
+    const bl = BTN_LABELS[estado];
+    btnText.textContent = bl.text;
+    btnConfirmar.className = bl.cls;
+    if (estado === 'completo') btnConfirmar.disabled = true;
 
     setAlert('alert-confirmar', '', '');
-
 
     // Abrir modal
     document.getElementById('modal-confirm').classList.add('open');
@@ -573,14 +586,26 @@ const App = {
     if (e.target === document.getElementById('modal-confirm')) this.closeConfirm();
   },
 
-  // ── Confirmar asistencia ─────────────────────────────────────
+  // ── Confirmar asistencia ───────────────────────────────
   async confirmar() {
     const persona  = State.persona;
     const registro = State.registroActual;
     if (!persona) return;
 
-    const estado = !registro ? 'entrada'
-      : (registro.entrada && !registro.salida) ? 'salida' : 'completo';
+    // Determinar qué campo toca registrar ahora
+    const r = registro || {};
+    let estado;
+    if (r.entrada_manana && r.salida_manana && r.entrada_tarde && r.salida_tarde) {
+      estado = 'completo';
+    } else if (r.entrada_manana && r.salida_manana && r.entrada_tarde) {
+      estado = 'salida_tarde';
+    } else if (r.entrada_manana && r.salida_manana) {
+      estado = 'entrada_tarde';
+    } else if (r.entrada_manana) {
+      estado = 'salida_manana';
+    } else {
+      estado = 'entrada_manana';
+    }
     if (estado === 'completo') return;
 
     setLoading('btn-confirmar', 'spinner-confirmar', 'btn-confirmar-text', true);
@@ -588,7 +613,6 @@ const App = {
 
     const idKey = persona.DNI || persona.CUIT || '';
     const ahora = horaLocal();
-    // Hoja refleja el tipo real de la persona
     const tipoPersona = persona.TIPO || '';
     const hoja = tipoPersona === 'supervisor' ? 'SUPERVISORES'
                : tipoPersona === 'directivo'  ? 'DIRECTIVOS'
@@ -596,51 +620,57 @@ const App = {
                : (State.dia === 'viernes7'    ? 'DIRECTIVOS' : 'DOCENTES');
 
     try {
-      if (estado === 'entrada') {
+      if (estado === 'entrada_manana') {
+        // Primera vez: crear el documento con los 4 campos inicializados
         const record = {
           dia:    State.dia,
           hoja,
           idKey,
           nombre:   persona.NOMBRE   || '',
           apellido: persona.APELLIDO || '',
-          entrada:  ahora,
-          salida:   null,
+          entrada_manana: ahora,
+          salida_manana:  null,
+          entrada_tarde:  null,
+          salida_tarde:   null,
           esNuevo:  false,
-          timestamp_entrada: firebase.firestore.FieldValue.serverTimestamp(),
-          timestamp_salida:  null,
+          timestamp_entrada_manana: firebase.firestore.FieldValue.serverTimestamp(),
           datos: persona,
         };
-        // Guardar en Firestore y esperar confirmación
         if (db) {
           const ref = await db.collection('asistencia_meta').add(record);
-          // Actualizar caché con el id real de Firestore
           RecordCache.set(State.dia, idKey, { id: ref.id, ...record });
         }
       } else {
-        // Segunda vez: actualizar con salida
-        // Leer id real del caché (puede haber sido actualizado por onSnapshot)
+        // Actualizaciones sucesivas: solo parchear el campo que corresponde
         const registroActual = RecordCache.get(State.dia, idKey) || registro;
         const docId = registroActual ? registroActual.id : null;
-        const updates = {
-          salida: ahora,
-          timestamp_salida: firebase.firestore.FieldValue.serverTimestamp(),
-        };
+
+        const campoValor = {};
+        if (estado === 'salida_manana') {
+          campoValor.salida_manana = ahora;
+          campoValor.timestamp_salida_manana = firebase.firestore.FieldValue.serverTimestamp();
+        } else if (estado === 'entrada_tarde') {
+          campoValor.entrada_tarde = ahora;
+          campoValor.timestamp_entrada_tarde = firebase.firestore.FieldValue.serverTimestamp();
+        } else if (estado === 'salida_tarde') {
+          campoValor.salida_tarde = ahora;
+          campoValor.timestamp_salida_tarde = firebase.firestore.FieldValue.serverTimestamp();
+        }
+
         if (db && docId && docId !== '_pending_') {
-          // Id confirmado: actualizar directamente
-          await db.collection('asistencia_meta').doc(docId).update(updates);
+          await db.collection('asistencia_meta').doc(docId).update(campoValor);
         } else if (db) {
-          // Fallback: buscar el doc en Firestore por dia + idKey
           const snap = await db.collection('asistencia_meta')
             .where('dia',   '==', State.dia)
             .where('idKey', '==', String(idKey))
             .limit(1).get();
           if (!snap.empty) {
-            await snap.docs[0].ref.update(updates);
+            await snap.docs[0].ref.update(campoValor);
           }
         }
-        // Actualizar caché local
-        RecordCache.patch(State.dia, idKey, updates);
+        RecordCache.patch(State.dia, idKey, campoValor);
       }
+
 
 
       this.closeConfirm();
@@ -746,21 +776,25 @@ const App = {
   _mostrarExito(nombreCompleto, tipo, hora, esNuevo = false) {
     document.getElementById('success-name').textContent = nombreCompleto;
 
-    const sub  = document.getElementById('success-sub');
+    const sub   = document.getElementById('success-sub');
     const badge = document.getElementById('success-badge');
     const det   = document.getElementById('success-details');
+
+    const EXITO_MAP = {
+      entrada_manana: { sub: 'Entrada mañana registrada',  badgeCls: 'badge-entrada',       label: 'Entrada mañana' },
+      salida_manana:  { sub: 'Salida mañana registrada',   badgeCls: 'badge-salida',        label: 'Salida mañana'  },
+      entrada_tarde:  { sub: 'Entrada tarde registrada',   badgeCls: 'badge-entrada-tarde', label: 'Entrada tarde'  },
+      salida_tarde:   { sub: 'Salida tarde registrada',    badgeCls: 'badge-salida-tarde',  label: 'Salida tarde'   },
+    };
 
     if (esNuevo) {
       sub.textContent = 'Inscripción y asistencia registradas';
       badge.innerHTML = `<span class="status-badge badge-excepcional">Caso excepcional · ${hora}</span>`;
       det.innerHTML   = '';
-    } else if (tipo === 'entrada') {
-      sub.textContent = 'Entrada registrada correctamente';
-      badge.innerHTML = `<span class="status-badge badge-entrada">Entrada · ${hora}</span>`;
-      det.innerHTML   = '';
     } else {
-      sub.textContent = 'Salida registrada correctamente';
-      badge.innerHTML = `<span class="status-badge badge-salida">Salida · ${hora}</span>`;
+      const info = EXITO_MAP[tipo] || { sub: 'Asistencia registrada', badgeCls: 'badge-entrada', label: tipo };
+      sub.textContent = info.sub;
+      badge.innerHTML = `<span class="status-badge ${info.badgeCls}">${info.label} · ${hora}</span>`;
       det.innerHTML   = '';
     }
 
@@ -776,7 +810,6 @@ const App = {
     const returnTo = esNuevo ? 'screen-home' : 'screen-busqueda';
     setTimeout(() => {
       if (returnTo === 'screen-busqueda' && State.dia) {
-        // Limpiar búsqueda y volver
         document.getElementById('input-busqueda').value = '';
         document.getElementById('results-busqueda').innerHTML = '';
         setAlert('alert-busqueda', '', '');
@@ -809,16 +842,18 @@ const App = {
   },
 
   _updateStats(records) {
-    const total       = records.length;
-    const viernes     = records.filter(r => r.dia === 'viernes7').length;
-    const sabado      = records.filter(r => r.dia === 'sabado8').length;
-    const completos   = records.filter(r => r.entrada && r.salida).length;
-    const excepc      = records.filter(r => r.esNuevo).length;
+    const total     = records.length;
+    const viernes   = records.filter(r => r.dia === 'viernes7').length;
+    const sabado    = records.filter(r => r.dia === 'sabado8').length;
+    const completos = records.filter(r =>
+      r.entrada_manana && r.salida_manana && r.entrada_tarde && r.salida_tarde
+    ).length;
+    const excepc    = records.filter(r => r.esNuevo).length;
 
-    document.getElementById('stat-total').textContent       = total;
-    document.getElementById('stat-viernes').textContent     = viernes;
-    document.getElementById('stat-sabado').textContent      = sabado;
-    document.getElementById('stat-completos').textContent   = completos;
+    document.getElementById('stat-total').textContent         = total;
+    document.getElementById('stat-viernes').textContent       = viernes;
+    document.getElementById('stat-sabado').textContent        = sabado;
+    document.getElementById('stat-completos').textContent     = completos;
     document.getElementById('stat-excepcionales').textContent = excepc;
   },
 
@@ -865,11 +900,15 @@ const App = {
       const nombre = `${r.nombre || ''} ${r.apellido || ''}`.trim() || 'Sin nombre';
       const idKey  = r.idKey || '—';
 
+      // Badge en base a los 4 campos de turno
+      const esCompleto = r.entrada_manana && r.salida_manana && r.entrada_tarde && r.salida_tarde;
+      const enProgreso = r.entrada_manana && !esCompleto;
+
       let estadoBadge = '';
-      if (r.entrada && r.salida) {
+      if (esCompleto) {
         estadoBadge = `<span class="status-badge badge-completo">Completo</span>`;
-      } else if (r.entrada) {
-        estadoBadge = `<span class="status-badge badge-entrada">Solo entrada</span>`;
+      } else if (enProgreso) {
+        estadoBadge = `<span class="status-badge badge-entrada">En progreso</span>`;
       } else {
         estadoBadge = `<span class="status-badge badge-pendiente">Pendiente</span>`;
       }
@@ -892,11 +931,11 @@ const App = {
           <div class="attendee-horarios">
             <span class="horario-pill">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-              Entrada: ${r.entrada || '—'}
+              Mañana: ${r.entrada_manana || '—'} – ${r.salida_manana || '—'}
             </span>
             <span class="horario-pill">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              Salida: ${r.salida || '—'}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              Tarde: ${r.entrada_tarde || '—'} – ${r.salida_tarde || '—'}
             </span>
           </div>
         </div>`;
@@ -912,14 +951,19 @@ const App = {
     }
 
     const rows = records.map(r => ({
-      'Día':       r.dia === 'viernes7' ? 'Viernes 7/8' : r.dia === 'sabado8' ? 'Sábado 8/8' : 'Excepcional',
-      'Nombre':    r.nombre || '',
-      'Apellido':  r.apellido || '',
-      'DNI/ID':    r.idKey || '',
-      'Entrada':   r.entrada || '',
-      'Salida':    r.salida  || '',
-      'Es nuevo':  r.esNuevo ? 'Sí' : 'No',
-      'Hoja':      r.hoja || '',
+      'Día':                r.dia === 'viernes7' ? 'Viernes 7/8' : r.dia === 'sabado8' ? 'Sábado 8/8' : 'Excepcional',
+      'Nombre':             r.nombre   || '',
+      'Apellido':           r.apellido || '',
+      'DNI/ID':             r.idKey    || '',
+      'Entrada Mañana':     r.entrada_manana || '',
+      'Salida Mañana':      r.salida_manana  || '',
+      'Entrada Tarde':      r.entrada_tarde  || '',
+      'Salida Tarde':       r.salida_tarde   || '',
+      'Asistió Mañana':     r.entrada_manana ? 'Sí' : 'No',
+      'Asistió Tarde':      r.entrada_tarde  ? 'Sí' : 'No',
+      'Asistencia completa':(r.entrada_manana && r.salida_manana && r.entrada_tarde && r.salida_tarde) ? 'Sí' : 'No',
+      'Es nuevo':           r.esNuevo ? 'Sí' : 'No',
+      'Hoja':               r.hoja    || '',
       ...Object.fromEntries(
         Object.entries(r.datos || {}).map(([k, v]) => [`Dato: ${k}`, v || ''])
       ),

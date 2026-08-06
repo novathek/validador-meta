@@ -810,7 +810,8 @@ select.text-field-input {
 .btn.excepcional-btn:hover  { box-shadow: var(--elev-3); filter: brightness(1.08); transform: translateY(-2px); }
 .btn.excepcional-btn:active { box-shadow: none; filter: brightness(.92); transform: translateY(1px) scale(0.98); }
 
-/* ── Botón salida ────────────────────────────────── */
+
+/* ── Botón salida mañana (amber) ─────────────────── */
 .btn.btn-filled-salida {
   background: #D97706;
   color: #fff;
@@ -818,6 +819,54 @@ select.text-field-input {
 }
 .btn.btn-filled-salida:hover  { box-shadow: var(--elev-3); filter: brightness(1.06); transform: translateY(-2px); }
 .btn.btn-filled-salida:active { box-shadow: none; transform: translateY(1px) scale(0.98); }
+
+/* ── Botón entrada tarde (teal/cyan) ─────────────── */
+.btn.btn-filled-tarde {
+  background: #0891B2;
+  color: #fff;
+  box-shadow: var(--elev-1);
+}
+.btn.btn-filled-tarde:hover  { box-shadow: var(--elev-3); filter: brightness(1.06); transform: translateY(-2px); }
+.btn.btn-filled-tarde:active { box-shadow: none; transform: translateY(1px) scale(0.98); }
+
+/* ── Botón salida tarde (naranja oscuro) ─────────── */
+.btn.btn-filled-salida-tarde {
+  background: #EA580C;
+  color: #fff;
+  box-shadow: var(--elev-1);
+}
+.btn.btn-filled-salida-tarde:hover  { box-shadow: var(--elev-3); filter: brightness(1.06); transform: translateY(-2px); }
+.btn.btn-filled-salida-tarde:active { box-shadow: none; transform: translateY(1px) scale(0.98); }
+
+/* ── Banners de los 4 turnos ─────────────────────── */
+.banner-entrada-manana {
+  background: var(--md-success-container);
+  color: var(--md-success);
+}
+.banner-salida-manana {
+  background: #FEF3C7;
+  color: #92400E;
+}
+.banner-entrada-tarde {
+  background: #CFFAFE;
+  color: #0E7490;
+}
+.banner-salida-tarde {
+  background: #FFEDD5;
+  color: #9A3412;
+}
+
+/* ── Badges de éxito para los 4 turnos ───────────── */
+.badge-entrada-tarde {
+  background: #CFFAFE;
+  color: #0E7490;
+}
+.badge-salida-tarde {
+  background: #FFEDD5;
+  color: #9A3412;
+}
+
+
 
 /* ── Grilla 2x3 de criterios de búsqueda ────────── */
 .search-grid {

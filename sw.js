@@ -4,7 +4,7 @@
    Network-first para Firebase (requiere conexión para asistencia).
    ================================================================ */
 
-const CACHE_NAME = 'meta-asistencia-v1';
+const CACHE_NAME = 'meta-asistencia-v3';
 
 // Assets que se cachean para funcionar offline
 const STATIC_ASSETS = [
